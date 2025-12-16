@@ -11,4 +11,8 @@ function client.set_implementation(callback)
   callback(ok, result)
 end
 
+function client.register_session_token(token, profile)
+  return client.implementation.register_session_token(token, profile)
+end
+
 return client

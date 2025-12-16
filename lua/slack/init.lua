@@ -2,9 +2,9 @@ local M = {
   is_open = false,
 }
 function M.open()
-  local client = require("kubectl.client")
+  local client = require("slack.client")
   client.set_implementation(function(ok, result)
-    print(ok, result)
+    print(result)
   end)
 end
 

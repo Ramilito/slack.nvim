@@ -14,8 +14,16 @@ crate-type = ["cdylib"]
 [dependencies]
 cfg-if = "1.0"
 slack-telemetry = { path = "../slack-telemetry", optional = true }
-slack-morphism = "2.17"
+slack-morphism = { version = "2.17", features = ["hyper"] }
 mlua = { version = "0.11.5", features = ["module", "luajit", "serialize", "async"] }
 tracing = "0.1.43"
 tracing-appender            = "0.2"
 tracing-subscriber          = { version = "0.3", features = ["env-filter", "fmt", "registry"] }
+tokio = { version = "1.48.0", features = ["rt-multi-thread", "macros"] }
+anyhow = "1.0.100"
+keyring = { version = "3.6.3", default-features = false, features = [
+    "apple-native",
+    "windows-native",
+    "sync-secret-service",
+    "crypto-rust",
+] }

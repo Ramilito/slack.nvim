@@ -1,3 +1,4 @@
 --- @class slack.ClientImplementation
 --- @field init_runtime fun()
 --- @field init_logging fun(filepath: string)
+--- @field register_session_token fun(token: string, profile: string)
