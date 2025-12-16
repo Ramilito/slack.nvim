@@ -1,0 +1,18 @@
+[package]
+name = "slack-client"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+telemetry = ["slack-telemetry"]
+
+[lib]
+path = "./src/lib.rs"
+crate-type = ["cdylib"]
+
+
+[dependencies]
+slack-telemetry = { path = "../slack-telemetry", optional = true }
+slack-morphism = "2.17"
+mlua = { version = "0.11.5", features = ["module", "luajit", "serialize", "async"] }
+tracing = "0.1.43"
