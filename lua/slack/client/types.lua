@@ -1,0 +1,3 @@
+--- @class slack.ClientImplementation
+--- @field init_runtime fun()
+--- @field init_logging fun(filepath: string)

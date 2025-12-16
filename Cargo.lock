@@ -1443,10 +1443,13 @@ checksum = "7a2ae44ef20feb57a68b23d846850f861394c2e02dc425a50098ae8c90267589"
 name = "slack-client"
 version = "0.1.0"
 dependencies = [
+ "cfg-if",
  "mlua",
  "slack-morphism",
  "slack-telemetry",
  "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
 ]
 
 [[package]]
