@@ -4,27 +4,28 @@ local M = {
 function M.open()
   local client = require("slack.client")
   client.set_implementation(function(ok, result)
-
-    -- if not result.ok then
-    --   vim.notify("Slack register failed: " .. result.error, vim.log.levels.ERROR)
-    -- else
-    --   print(
-    --     ("Connected to %s (%s) as %s (%s)"):format(
-    --       result.team,
-    --       result.team_id,
-    --       result.user or "<unknown>",
-    --       result.user_id
-    --     )
-    --   )
-    -- end
-    --
-    -- -- Later, just re-use the stored token
-    -- local ping = slack_native.test_connection("work")
-    -- if not ping.ok then
-    --   vim.notify("Slack connection failed: " .. ping.error, vim.log.levels.ERROR)
-    -- else
-    --   print("Slack connection OK for team " .. ping.team)
-    -- end
+    if not ok then
+      vim.notify("Slack register failed: " .. result.error, vim.log.levels.ERROR)
+    else
+      local convos = client.conversations(10)
+      vim.print(convos)
+      --   print(
+      --     ("Connected to %s (%s) as %s (%s)"):format(
+      --       result.team,
+      --       result.team_id,
+      --       result.user or "<unknown>",
+      --       result.user_id
+      --     )
+      --   )
+      -- end
+      --
+      -- -- Later, just re-use the stored token
+      -- local ping = slack_native.test_connection("work")
+      -- if not ping.ok then
+      --   vim.notify("Slack connection failed: " .. ping.error, vim.log.levels.ERROR)
+      -- else
+      --   print("Slack connection OK for team " .. ping.team)
+    end
   end)
 end
 

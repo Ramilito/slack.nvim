@@ -2,3 +2,4 @@
 --- @field init_runtime fun(profile: string)
 --- @field init_logging fun(filepath: string)
 --- @field register fun(profile: string, token: string)
+--- @field conversations fun(limit: string?)

@@ -10,6 +10,8 @@ use slack_morphism::{
 use std::sync::{Arc, Mutex, OnceLock};
 use tokio::runtime::Runtime;
 
+use crate::client::list_conversations;
+
 mod client;
 
 cfg_if::cfg_if! {
@@ -176,6 +178,11 @@ fn lua_init_runtime(lua: &Lua, profile: String) -> LuaResult<LuaValue> {
     lua.to_value(&auth).map_err(LuaError::external)
 }
 
+fn lua_conversations(lua: &Lua, limit: Option<u16>) -> LuaResult<LuaValue> {
+    let convos = list_conversations(limit)?;
+    lua.to_value(&convos).map_err(LuaError::external)
+}
+
 #[tracing::instrument]
 #[mlua::lua_module(skip_memory_check)]
 fn slack_client(lua: &Lua) -> LuaResult<mlua::Table> {
@@ -192,6 +199,7 @@ fn slack_client(lua: &Lua) -> LuaResult<mlua::Table> {
 
     exports.set("init_runtime", lua.create_function(lua_init_runtime)?)?;
     exports.set("register", lua.create_function(lua_register)?)?;
+    exports.set("conversations", lua.create_function(lua_conversations)?)?;
 
     Ok(exports)
 }

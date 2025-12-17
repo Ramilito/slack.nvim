@@ -17,4 +17,8 @@ function client.register(profile, token)
   return client.implementation.register(profile, token)
 end
 
+function client.conversations(limit)
+  return client.implementation.conversations(limit)
+end
+
 return client
