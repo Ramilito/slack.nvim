@@ -1319,6 +1319,7 @@ version = "0.11.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "935ac67539907efcd7198137eb7358e052555f77fe1b2916600a2249351f2b33"
 dependencies = [
+ "anyhow",
  "bstr",
  "either",
  "erased-serde",
@@ -2322,6 +2323,7 @@ dependencies = [
  "cfg-if",
  "keyring",
  "mlua",
+ "serde",
  "slack-morphism",
  "slack-telemetry",
  "tokio",

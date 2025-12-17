@@ -1,54 +1,65 @@
-use slack_morphism::{
-    errors::SlackClientError,
-    hyper_tokio::{SlackClientHyperConnector, SlackHyperClient},
-    SlackApiToken,
-};
-use std::sync::OnceLock;
-use tokio::runtime::Runtime;
+use anyhow::Result;
+use serde::Serialize;
+use slack_morphism::prelude::*;
 
-static RUNTIME: OnceLock<Runtime> = OnceLock::new();
-static CLIENT: OnceLock<SlackHyperClient> = OnceLock::new();
+use crate::{active_context, http_client, runtime};
 
-fn runtime() -> &'static Runtime {
-    RUNTIME.get_or_init(|| {
-        tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build()
-            .expect("failed to create tokio runtime")
-    })
+#[derive(Clone, Debug, Serialize)]
+pub struct ConversationSummary {
+    pub id: String,
+    pub name: Option<String>,
+    pub is_im: bool,
+    pub is_private: bool,
+    pub is_mpim: bool,
+    pub is_archived: bool,
+    pub num_members: Option<u64>,
 }
 
-fn client() -> &'static SlackHyperClient {
-    CLIENT.get_or_init(|| {
-        // new() exists for the default HTTPS specialization :contentReference[oaicite:3]{index=3}
-        let connector =
-            SlackClientHyperConnector::new().expect("failed to create SlackClientHyperConnector");
-        SlackHyperClient::new(connector)
-    })
-}
+pub fn list_conversations(limit: Option<u16>) -> Result<Vec<ConversationSummary>> {
+    let ctx = active_context()?;
+    let max = limit.unwrap_or(500) as usize;
 
-#[derive(Debug, Clone)]
-pub struct AuthInfo {
-    pub user_id: String,
-    pub team_id: String,
-    pub user: Option<String>,
-    pub team: String,
-    pub bot_id: Option<String>,
-    pub url: String,
-}
-
-pub fn test_auth(token: SlackApiToken) -> Result<AuthInfo, SlackClientError> {
     runtime().block_on(async move {
-        let session = client().open_session(&token);
-        let resp = session.auth_test().await?;
+        let session = http_client().open_session(&ctx.token);
 
-        Ok(AuthInfo {
-            user_id: resp.user_id.to_string(),
-            team_id: resp.team_id.to_string(),
-            user: resp.user.clone(),
-            team: resp.team.clone(),
-            bot_id: resp.bot_id.map(|b| b.to_string()),
-            url: resp.url.0.to_string(),
-        })
+        let mut out: Vec<ConversationSummary> = Vec::new();
+        let mut cursor: Option<SlackCursorId> = None;
+
+        while out.len() < max {
+            let mut req = SlackApiConversationsListRequest::new()
+                .with_exclude_archived(true)
+                .with_limit(std::cmp::min(200, (max - out.len()) as u16));
+
+            if let Some(c) = cursor.clone() {
+                req = req.with_cursor(c);
+            }
+
+            let resp = session.conversations_list(&req).await?;
+
+            for ch in resp.channels.clone().into_iter() {
+                let f = ch.flags.clone();
+                out.push(ConversationSummary {
+                    id: ch.id.to_string(),
+                    name: ch.name.clone(),
+                    is_im: f.is_im.unwrap_or(false),
+                    is_private: f.is_private.unwrap_or(false),
+                    is_mpim: f.is_mpim.unwrap_or(false),
+                    is_archived: f.is_archived.unwrap_or(false),
+                    num_members: ch.num_members,
+                });
+
+                if out.len() >= max {
+                    break;
+                }
+            }
+
+            cursor = resp.next_cursor().cloned();
+            if cursor.is_none() {
+                break;
+            }
+        }
+
+        Ok(out)
     })
 }
+

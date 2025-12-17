@@ -4,7 +4,7 @@ local M = {
 function M.open()
   local client = require("slack.client")
   client.set_implementation(function(ok, result)
-    print(result)
+
     -- if not result.ok then
     --   vim.notify("Slack register failed: " .. result.error, vim.log.levels.ERROR)
     -- else

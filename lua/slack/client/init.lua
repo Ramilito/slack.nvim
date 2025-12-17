@@ -7,12 +7,14 @@ local client = {
 function client.set_implementation(callback)
   client.implementation = require("slack_client")
   client.implementation.init_logging(vim.fn.stdpath("log"))
-  local ok, result = client.implementation.init_runtime()
+  client.register("work", "")
+  local ok, result = client.implementation.init_runtime("work")
+
   callback(ok, result)
 end
 
-function client.register_session_token(token, profile)
-  return client.implementation.register_session_token(token, profile)
+function client.register(profile, token)
+  return client.implementation.register(profile, token)
 end
 
 return client
