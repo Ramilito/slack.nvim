@@ -1,26 +1,38 @@
-use anyhow::Result;
-use serde::Serialize;
+use anyhow::{Context, Result};
 use slack_morphism::prelude::*;
+use std::sync::Arc;
 
-use crate::{active_context, http_client, runtime};
+use crate::slack::types::{AuthSummary, ConversationSummary};
 
-#[derive(Clone, Debug, Serialize)]
-pub struct ConversationSummary {
-    pub id: String,
-    pub name: Option<String>,
-    pub is_im: bool,
-    pub is_private: bool,
-    pub is_mpim: bool,
-    pub is_archived: bool,
-    pub num_members: Option<u64>,
+#[derive(Clone)]
+pub struct SlackApi {
+    http: Arc<SlackHyperClient>,
 }
 
-pub fn list_conversations(limit: Option<u16>) -> Result<Vec<ConversationSummary>> {
-    let ctx = active_context()?;
-    let max = limit.unwrap_or(500) as usize;
+impl SlackApi {
+    pub fn new() -> Result<Self> {
+        let connector =
+            SlackClientHyperConnector::new().context("failed to create Slack hyper connector")?;
+        Ok(Self {
+            http: Arc::new(SlackHyperClient::new(connector)),
+        })
+    }
 
-    runtime().block_on(async move {
-        let session = http_client().open_session(&ctx.token);
+    pub async fn auth_test(&self, token: &SlackApiToken) -> Result<AuthSummary> {
+        let session = self.http.open_session(token);
+        let resp = session
+            .auth_test()
+            .await
+            .context("Slack API auth.test failed")?;
+        Ok(AuthSummary::from_auth_test(&resp))
+    }
+
+    pub async fn list_conversations(
+        &self,
+        token: &SlackApiToken,
+        max: usize,
+    ) -> Result<Vec<ConversationSummary>> {
+        let session = self.http.open_session(token);
 
         let mut out: Vec<ConversationSummary> = Vec::new();
         let mut cursor: Option<SlackCursorId> = None;
@@ -34,7 +46,10 @@ pub fn list_conversations(limit: Option<u16>) -> Result<Vec<ConversationSummary>
                 req = req.with_cursor(c);
             }
 
-            let resp = session.conversations_list(&req).await?;
+            let resp = session
+                .conversations_list(&req)
+                .await
+                .context("Slack API conversations.list failed")?;
 
             for ch in resp.channels.clone().into_iter() {
                 let f = ch.flags.clone();
@@ -60,6 +75,5 @@ pub fn list_conversations(limit: Option<u16>) -> Result<Vec<ConversationSummary>
         }
 
         Ok(out)
-    })
+    }
 }
-

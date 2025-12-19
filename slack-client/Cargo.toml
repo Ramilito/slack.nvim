@@ -28,3 +28,5 @@ keyring = { version = "3.6.3", default-features = false, features = [
     "crypto-rust",
 ] }
 serde = "1.0.228"
+thiserror = "2.0.17"
+serde_json = "1.0.145"
